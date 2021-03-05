@@ -1,0 +1,74 @@
+---
+- name: Copy ElasticSearch yum repo file
+  copy:
+    src=elk.repo
+    dest=/etc/yum.repos.d/elk.repo
+    owner=root
+    group=root
+    mode=0644
+  become: true
+
+- name: Creates ELK Cert Directory
+  file:
+    path: /etc/beat
+    state: directory
+    mode: 0755
+  become: true
+
+- name: Import ElasticSearch GPG Key
+  rpm_key: key=https://packages.elastic.co/GPG-KEY-elasticsearch
+    state=present
+  become: true
+
+- name: Install filebeat rpms
+  yum:
+    name: filebeat
+  become: true
+  when: (logging_backend != 'fluentd')
+
+- name: Install filebeat rpms (EL8/Fedora)
+  dnf:
+    name: filebeat
+  become: true
+  when: logging_backend != 'fluentd' and ansible_distribution_major_version|int >= 8
+
+- name: Generate filebeat configuration template
+  template:
+    src=filebeat.yml.j2
+    dest=/etc/filebeat/filebeat.yml
+    owner=root
+    group=root
+    mode=0644
+  become: true
+  when: (logging_backend != 'fluentd')
+  register: filebeat_needs_restart
+
+- name: Enable and configure the system module
+  shell: filebeat modules enable system
+  ignore_errors: true
+  become: true
+  when: (logging_backend != 'fluentd')
+
+- name: Start Filebeat
+  shell: filebeat setup
+  ignore_errors: true
+  become: true
+  when: ((filebeat_needs_restart != 0) and (logging_backend != 'fluentd'))
+
+- name: Start filebeat service
+  service:
+    name: filebeat
+    state: started
+  ignore_errors: true
+  become: true
+  when: ((filebeat_needs_restart != 0) and (logging_backend != 'fluentd'))
+
+- name: Setup filebeat service
+  service: 
+    name: filebeat
+    state: started
+    enabled: true
+  become: true
+  when: (logging_backend != 'fluentd')
+
+
