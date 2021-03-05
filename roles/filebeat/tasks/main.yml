@@ -49,6 +49,12 @@
   become: true
   when: (logging_backend != 'fluentd')
 
+- name: debug
+  debug:
+    var: filebeat_needs_restart
+  tags:
+    - debug
+
 - name: Setup Filebeat
   shell: filebeat setup
   ignore_errors: true
