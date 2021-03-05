@@ -59,7 +59,7 @@
   shell: filebeat setup
   ignore_errors: true
   become: true
-  when: ((filebeat_needs_restart != 0) and (logging_backend != 'fluentd'))
+  when: ((filebeat_needs_restart.changed) and (logging_backend != 'fluentd'))
 
 - name: Start filebeat service
   service:
@@ -67,7 +67,7 @@
     state: started
   ignore_errors: true
   become: true
-  when: ((filebeat_needs_restart != 0) and (logging_backend != 'fluentd'))
+  when: ((filebeat_needs_restart.changed) and (logging_backend != 'fluentd'))
 
 - name: Setup filebeat service
   service: 
