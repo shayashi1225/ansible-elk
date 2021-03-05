@@ -49,7 +49,7 @@
   become: true
   when: (logging_backend != 'fluentd')
 
-- name: Start Filebeat
+- name: Setup Filebeat
   shell: filebeat setup
   ignore_errors: true
   become: true
